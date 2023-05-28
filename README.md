@@ -19,9 +19,7 @@ To play Super Mario Game on your local machine, follow these steps:
 
 ## Usage
 
-Once you have installed the game, you can run it using the following command:
-
-npm run mario
+Once you have installed the game, you can run it using the following command: `npm run mario`
 
 This will start the game and launch it in your default web browser. If it doesn't open automatically, you can access the game by visiting http://localhost:3000 in your browser.
 Might have to refresh the browser to load the images.

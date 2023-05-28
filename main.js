@@ -18,13 +18,12 @@ canvas.height = 576;
 
 const context = canvas.getContext("2d");
 
-const platform = "./Tiles/bigPlatform.png";
-const platform1 = "./Tiles/midPlatform.png";
-const platform2 = "./Tiles/smallPlatform.png";
-const bg = "./BG/BG.png";
 const gravity = 1.5;
 
 let player;
+let bgImg;
+let obstacleImg;
+let poweUpImg;
 let Flag;
 let bigPlatform;
 let midPlatform;
@@ -42,7 +41,9 @@ let playerPowerUp = false;
 let fireBallPushed = false;
 let hi_score;
 //24 for the canvas width deduction as it has 1024w and background image has 1000w,taking product of one less background images of the array and (rounding it to its floor; here round off is taken w.r.to lengthCovered=+-3 ie(3) if necessary)
-const backgroundWidth = CreateImage(bg).width * 3 - 24;
+let backgroundWidth;
+// const calculatedWidth = CreateImage(bg).width * 3 - 24;
+// backgroundWidth = calculatedWidth > 0 ? calculatedWidth : 2976;
 const playerSprite = {
   stand: {
     cropXr: 250,
@@ -183,6 +184,14 @@ function CheckHiScore(score, destination = "not_reached") {
  * Initializes the game.
  */
 function init() {
+  //24 for the canvas width deduction as it has 1024w and background image has 1000w,taking product of one less background images of the array and (rounding it to its floor; here round off is taken w.r.to lengthCovered=+-3 ie(3) if necessary)
+  backgroundWidth = CreateImage("./BG/BG.png").width * 3 - 24;
+  bgImg = CreateImage("./BG/BG.png");
+  obstacleImg = CreateImage("./Object/obstacle.png");
+  poweUpImg = CreateImage("./Object/Mushroom_1.png");
+  bigPlatform = CreateImage("./Tiles/bigPlatform.png");
+  midPlatform = CreateImage("./Tiles/midPlatform.png");
+  smallPlatform = CreateImage("./Tiles/smallPlatform.png");
   hi_score = sessionStorage.getItem("highScore");
   player = new Player(playerSprite, gravity, canvas, context);
   Flag = new WinFlag({
@@ -193,39 +202,38 @@ function init() {
     canvas,
     context,
   });
+
   backgroundObjects = [
     new BackgroundObject({
       position: { x: 0, y: 0 },
-      width: CreateImage(bg).width,
-      height: CreateImage(bg).height,
-      image: CreateImage(bg),
+      width: bgImg.width,
+      height: bgImg.height,
+      image: bgImg,
       context,
     }),
     new BackgroundObject({
-      position: { x: CreateImage(bg).width, y: -1 },
-      width: CreateImage(bg).width,
-      height: CreateImage(bg).height,
-      image: CreateImage(bg),
+      position: { x: bgImg.width, y: -1 },
+      width: bgImg.width,
+      height: bgImg.height,
+      image: bgImg,
       context,
     }),
     new BackgroundObject({
-      position: { x: CreateImage(bg).width * 2, y: -1 },
-      width: CreateImage(bg).width,
-      height: CreateImage(bg).height,
-      image: CreateImage(bg),
+      position: { x: bgImg.width * 2, y: -1 },
+      width: bgImg.width,
+      height: bgImg.height,
+      image: bgImg,
       context,
     }),
     new BackgroundObject({
-      position: { x: CreateImage(bg).width * 3, y: -1 },
-      width: CreateImage(bg).width,
-      height: CreateImage(bg).height,
-      image: CreateImage(bg),
+      position: { x: bgImg.width * 3, y: -1 },
+      width: bgImg.width,
+      height: bgImg.height,
+      image: bgImg,
       context,
     }),
   ];
-  bigPlatform = CreateImage(platform);
-  midPlatform = CreateImage(platform1);
-  smallPlatform = CreateImage(platform2);
+
   platforms = [
     new Platform({
       position: { x: 0, y: 490 },
@@ -570,7 +578,7 @@ function init() {
   obstacleObjects = [
     new ObstacleObject({
       position: { x: 850, y: 200 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -578,7 +586,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 1625, y: 200 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -586,7 +594,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 1955, y: 200 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -594,7 +602,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 3030, y: 200 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -602,7 +610,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 3210, y: 200 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -610,7 +618,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 2880, y: 400 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -618,7 +626,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 3140, y: 400 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -626,7 +634,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 4500, y: 200 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -634,7 +642,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 4840, y: 200 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -642,7 +650,7 @@ function init() {
     }),
     new ObstacleObject({
       position: { x: 5755, y: 470 },
-      image: CreateImage("./Object/obstacle.png"),
+      image: obstacleImg,
 
       gravity,
       canvas,
@@ -652,7 +660,7 @@ function init() {
   powerObjects = [
     new PowerObject({
       position: { x: 265, y: 0 },
-      image: CreateImage("./Object/Mushroom_1.png"),
+      image: poweUpImg,
 
       gravity,
       canvas,
@@ -660,7 +668,7 @@ function init() {
     }),
     new PowerObject({
       position: { x: 3000, y: 400 },
-      image: CreateImage("./Object/Mushroom_1.png"),
+      image: poweUpImg,
 
       gravity,
       canvas,
@@ -668,7 +676,7 @@ function init() {
     }),
     new PowerObject({
       position: { x: 5410, y: 50 },
-      image: CreateImage("./Object/Mushroom_1.png"),
+      image: poweUpImg,
 
       gravity,
       canvas,
