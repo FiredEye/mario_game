@@ -18,12 +18,52 @@ canvas.height = 576;
 
 const context = canvas.getContext("2d");
 
-const gravity = 1.5;
+// Get the modal-content div
+var modalContent = document.querySelector(".modal-content");
+var modalContent1 = document.querySelector(".modal-content1");
+var modalContent2 = document.querySelector(".modal-content2");
+var modalContent3 = document.querySelector(".modal-content3");
 
+// Selecting the input element
+var input = document.querySelector(".input");
+
+// Select the Show button
+var showButton = document.querySelector(".show");
+
+// Select the Start button
+var startButton = document.querySelector(".start");
+
+//Create the Resume button
+var resumeButton = document.querySelector(".resume");
+// Create the Resume Game button
+var resumeGameButton = document.querySelector(".resumeGame");
+
+//Create Return home button
+var returnHomeButton = document.querySelector(".returnHome");
+
+// Create the Restart button
+var restartButton = document.querySelector(".restart");
+
+// Create the Back button
+var backButton = document.querySelector(".back");
+var backButton1 = document.querySelector(".back1");
+
+// Add event listener to the input
+input.addEventListener("input", function () {
+  // Check the length of the input value
+  if (input.value.length > 4) {
+    startButton.removeAttribute("disabled"); // Enable the button
+  } else {
+    startButton.setAttribute("disabled", true); // Disable the button
+  }
+});
+
+const gravity = 1.5;
+let keysAccess = false;
 let player;
 let bgImg;
 let obstacleImg;
-let poweUpImg;
+let powerUpImg;
 let Flag;
 let bigPlatform;
 let midPlatform;
@@ -39,7 +79,7 @@ let scoreBoard = 140;
 let upKeyHeld = false;
 let playerPowerUp = false;
 let fireBallPushed = false;
-let hi_score;
+let hi_score, playerName, playerScore;
 //24 for the canvas width deduction as it has 1024w and background image has 1000w,taking product of one less background images of the array and (rounding it to its floor; here round off is taken w.r.to lengthCovered=+-3 ie(3) if necessary)
 let backgroundWidth;
 // const calculatedWidth = CreateImage(bg).width * 3 - 24;
@@ -157,27 +197,44 @@ const keys = {
 };
 /**
  * Checks if the current score is a high score and performs actions accordingly.
- * @param {number} score - The current score.
+ * @param {number} playScore - The current score.
  * @param {HiScoreStatus} [destination="not_reached"] - The destination status after reaching high score.
  */
-function CheckHiScore(score, destination = "not_reached") {
+function CheckHiScore(playScore, destination = "not_reached") {
   scoreBoard = 140;
   keys.left.pressed = false;
   keys.right.pressed = false;
   playerPowerUp = false;
-  const Hi_score = sessionStorage.getItem("highScore");
 
-  if ((!Hi_score || score > Hi_score) && score > 140) {
-    sessionStorage.setItem("highScore", score);
+  const userData = JSON.parse(sessionStorage.getItem("userData"));
+  const { id, score } = userData;
+  if (
+    (!hi_score || playScore > hi_score || playScore > score) &&
+    playScore > 140
+  ) {
     if (destination === "reached") {
       alert("You completed the game with a high score!!");
-    } else {
-      alert("You scored a Hi-Score");
+    } else if (playScore > score) {
+      fetch(`http://localhost:5000/api/userData/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ score: playScore }),
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          if (result.data) {
+            sessionStorage.setItem("userData", JSON.stringify(result.data));
+            alert("You Scored a personal Hi-Score");
+            init();
+          }
+        })
+        .catch((error) => console.error(error));
     }
   } else if (destination === "reached") {
     alert("You completed the game!!");
   }
-
   init();
 }
 /**
@@ -188,11 +245,22 @@ function init() {
   backgroundWidth = CreateImage("./BG/BG.png").width * 3 - 24;
   bgImg = CreateImage("./BG/BG.png");
   obstacleImg = CreateImage("./Object/obstacle.png");
-  poweUpImg = CreateImage("./Object/Mushroom_1.png");
+  powerUpImg = CreateImage("./Object/Mushroom_1.png");
   bigPlatform = CreateImage("./Tiles/bigPlatform.png");
   midPlatform = CreateImage("./Tiles/midPlatform.png");
   smallPlatform = CreateImage("./Tiles/smallPlatform.png");
-  hi_score = sessionStorage.getItem("highScore");
+
+  const data = sessionStorage.getItem("userData");
+  const { name, score } = JSON.parse(data);
+  playerName = name;
+  playerScore = score;
+  fetch("http://localhost:5000/api/highScore")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.largestScore) hi_score = data.largestScore;
+    })
+    .catch((error) => console.error(error));
+
   player = new Player(playerSprite, gravity, canvas, context);
   Flag = new WinFlag({
     position: { x: 5930, y: 340 },
@@ -660,7 +728,7 @@ function init() {
   powerObjects = [
     new PowerObject({
       position: { x: 265, y: 0 },
-      image: poweUpImg,
+      image: powerUpImg,
 
       gravity,
       canvas,
@@ -668,7 +736,7 @@ function init() {
     }),
     new PowerObject({
       position: { x: 3000, y: 400 },
-      image: poweUpImg,
+      image: powerUpImg,
 
       gravity,
       canvas,
@@ -676,7 +744,7 @@ function init() {
     }),
     new PowerObject({
       position: { x: 5410, y: 50 },
-      image: poweUpImg,
+      image: powerUpImg,
 
       gravity,
       canvas,
@@ -686,129 +754,339 @@ function init() {
   lengthCovered = 0;
 }
 
+let isPaused = false;
 /**
  *Animates the game by updating and drawing various game objects on the canvas.
  */
 function animate() {
-  requestAnimationFrame(animate);
-  /**
-   *Clears the canvas and sets the background color.
-   */
-  context.fillStyle = "white";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  /**
-   *Draws background objects that are within the canvas bounds.
-   */
-  backgroundObjects.forEach((backgroundObject) => {
-    if (isWithinBounds(backgroundObject, canvas)) {
-      backgroundObject.draw();
+  if (!isPaused) {
+    requestAnimationFrame(animate);
+    /**
+     *Clears the canvas and sets the background color.
+     */
+    context.fillStyle = "white";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    /**
+     *Draws background objects that are within the canvas bounds.
+     */
+    backgroundObjects.forEach((backgroundObject) => {
+      if (isWithinBounds(backgroundObject, canvas)) {
+        backgroundObject.draw();
+      }
+    });
+    /**
+     *Sets the text style and displays the score and hi-score if conditions are met.
+     */
+
+    context.fillStyle = "black";
+    context.font = "20px Arial";
+
+    context.fillText(`Player Name:${playerName}`, 10, 30);
+    context.fillText(`Personal-Score:${playerScore}`, 510, 30);
+
+    if (hi_score && hi_score > 140) {
+      context.fillText(`Hi-Score:${hi_score}`, canvas.width - 290, 30);
     }
-  });
-  /**
-   *Sets the text style and displays the score and hi-score if conditions are met.
-   */
 
-  context.fillStyle = "black";
-  context.font = "25px Arial";
-
-  if (hi_score && hi_score > 140) {
-    context.fillText(`Hi-Score:${hi_score}`, canvas.width - 350, 30);
-  }
-
-  context.fillText(`Score:${scoreBoard}`, canvas.width - 160, 30);
-  /**
-   *Draws platforms that are within the canvas bounds.
-   */
-  platforms.forEach((platform) => {
-    if (isWithinBounds(platform, canvas)) {
-      platform.draw();
-    }
-  });
-  /**
+    context.fillText(`Score:${scoreBoard}`, canvas.width - 130, 30);
+    /**
+     *Draws platforms that are within the canvas bounds.
+     */
+    platforms.forEach((platform) => {
+      if (isWithinBounds(platform, canvas)) {
+        platform.draw();
+      }
+    });
+    /**
 
 *Updates and draws the flag object if it is within the canvas bounds.
 */
 
-  if (isWithinBounds(Flag, canvas)) {
-    Flag.updateDraw();
-  }
-  /**
-   *Updates and draws power objects that are within the canvas bounds.
-   */
-  powerObjects.forEach((powerObject) => {
-    if (isWithinBounds(powerObject, canvas)) {
-      powerObject.updateDraw();
+    if (isWithinBounds(Flag, canvas)) {
+      Flag.updateDraw();
     }
-  });
-  /**
+    /**
+     *Updates and draws power objects that are within the canvas bounds.
+     */
+    powerObjects.forEach((powerObject) => {
+      if (isWithinBounds(powerObject, canvas)) {
+        powerObject.updateDraw();
+      }
+    });
+    /**
 
 *Updates and draws obstacle objects that are within the canvas bounds.
 */
-  obstacleObjects.forEach((obstacleObject, index) => {
-    if (obstacleObject.position.y + obstacleObject.height > canvas.height) {
-      obstacleObject.visible = false;
-    }
-    if (obstacleObject.visible && isWithinBounds(obstacleObject, canvas)) {
-      switch (index) {
-        case 0:
-        case 1:
-          obstacleObject.movement.x = -1;
-          break;
-        case 3:
-          obstacleObject.movement.x = -2;
-          break;
-        case 4:
-          obstacleObject.movement.x = -3;
-          break;
+    obstacleObjects.forEach((obstacleObject, index) => {
+      if (obstacleObject.position.y + obstacleObject.height > canvas.height) {
+        obstacleObject.visible = false;
       }
+      if (obstacleObject.visible && isWithinBounds(obstacleObject, canvas)) {
+        switch (index) {
+          case 0:
+          case 1:
+            obstacleObject.movement.x = -1;
+            break;
+          case 3:
+            obstacleObject.movement.x = -2;
+            break;
+          case 4:
+            obstacleObject.movement.x = -3;
+            break;
+        }
 
-      obstacleObject.updateDraw();
+        obstacleObject.updateDraw();
+      }
+    });
+
+    /**
+     *Updates and removes fire balls based on their position and range.
+     *Also updates the remaining fire balls.
+     */
+    fireBalls.forEach((fireBall, index) => {
+      if (
+        (lastKey === "left" && fireBall.position.x <= fireBall.range - 200) ||
+        (lastKey === "right" &&
+          fireBall.position.x + fireBall.width >= fireBall.range + 200)
+      ) {
+        fireBalls.splice(index, 1);
+      } else {
+        fireBall.update();
+      }
+    });
+    /**
+     *Updates and draws the player object.
+     */
+    player.updateDraw();
+
+    handlePlayerMovement();
+
+    handlePlatformCollision();
+
+    handlePowerObjectCollision();
+
+    handleObstacleCollision();
+
+    handlePlayerSpriteChange();
+
+    checkFlagCollision();
+
+    handleFireballMovement();
+
+    // Checks if the player is off the platform or not.
+    if (player.position.y + player.height > canvas.height) {
+      CheckHiScore(scoreBoard);
     }
-  });
-
-  /**
-   *Updates and removes fire balls based on their position and range.
-   *Also updates the remaining fire balls.
-   */
-  fireBalls.forEach((fireBall, index) => {
-    if (
-      (lastKey === "left" && fireBall.position.x <= fireBall.range - 200) ||
-      (lastKey === "right" &&
-        fireBall.position.x + fireBall.width >= fireBall.range + 200)
-    ) {
-      fireBalls.splice(index, 1);
-    } else {
-      fireBall.update();
-    }
-  });
-  /**
-   *Updates and draws the player object.
-   */
-  player.updateDraw();
-
-  handlePlayerMovement();
-
-  handlePlatformCollision();
-
-  handlePowerObjectCollision();
-
-  handleObstacleCollision();
-
-  handlePlayerSpriteChange();
-
-  checkFlagCollision();
-
-  handleFireballMovement();
-
-  // Checks if the player is off the platform or not.
-  if (player.position.y + player.height > canvas.height) {
-    CheckHiScore(scoreBoard);
   }
 }
 
-init();
+//Start the game when the start button is clicked
+startButton.addEventListener("click", async () => {
+  modalContent.style.display = "none";
+  const userData = { name: input.value, score: 140 };
 
-animate();
+  try {
+    const user = await fetch("http://localhost:5000/api/userData", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userData),
+    });
+    const result = await user.json();
+    if (result.data) {
+      sessionStorage.setItem("userData", JSON.stringify(result.data));
+      canvas.style.display = "block";
+      keysAccess = true;
+      init();
+
+      animate();
+    }
+    if (!user.ok) {
+      throw new Error("Failed to post data");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+});
+
+//resume the game when the resumeBtn is  pressed
+resumeButton.addEventListener("click", () => {
+  modalContent1.style.display = "none";
+  isPaused = false;
+  animate();
+});
+
+//return to the start page when presse
+returnHomeButton.addEventListener("click", () => {
+  sessionStorage.clear();
+  canvas.style.display = "none";
+  modalContent1.style.display = "none";
+  input.value = "";
+  startButton.setAttribute("disabled", true);
+  modalContent.style.display = "flex";
+  modalContent.style.flex = "none";
+  modalContent1.style.flex = "none";
+  modalContent2.style.flex = "none";
+  modalContent3.style.flex = "none";
+  isPaused = false;
+  scoreBoard = 140;
+  keys.left.pressed = false;
+  keys.right.pressed = false;
+  playerPowerUp = false;
+  lastKey = "right";
+  keysAccess = false;
+  input.focus();
+});
+//restart the game when the restartBtn is  pressed
+restartButton.addEventListener("click", () => {
+  modalContent1.style.display = "none";
+  isPaused = false;
+  scoreBoard = 140;
+  keys.left.pressed = false;
+  keys.right.pressed = false;
+  playerPowerUp = false;
+  lastKey = "right";
+  fetch("http://localhost:5000/api/highScore")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.largestScore) hi_score = data.largestScore;
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+  init();
+  animate();
+});
+
+//Show High Scores in the Table
+showButton.addEventListener("click", async () => {
+  modalContent.style.display = "none";
+  modalContent1.style.display = "none";
+  modalContent2.style.display = "flex";
+  const tableBody = document.getElementById("data-body");
+
+  // Display loading state
+  tableBody.innerHTML =
+    '<tr><td colspan="3"style="text-align:center" >Loading...</td></tr>';
+  try {
+    const response = await fetch("http://localhost:5000/api/data");
+    const result = await response.json();
+    const data = result.data;
+
+    // Clear existing table data
+    tableBody.innerHTML = "";
+
+    if (data.length > 0) {
+      // Iterate through the data and create table rows
+      data.forEach((row, index) => {
+        const tr = document.createElement("tr");
+
+        // Create table cells and populate with data
+        const idCell = document.createElement("td");
+        idCell.textContent = index + 1;
+        idCell.classList.add("bordered-cell");
+
+        const nameCell = document.createElement("td");
+        nameCell.textContent = row.name;
+        nameCell.classList.add("bordered-cell");
+
+        const scoreCell = document.createElement("td");
+        scoreCell.textContent = row.score;
+        scoreCell.classList.add("bordered-cell");
+
+        // Append cells to the table row
+        tr.appendChild(idCell);
+        tr.appendChild(nameCell);
+        tr.appendChild(scoreCell);
+
+        // Append the table row to the table body
+        tableBody.appendChild(tr);
+      });
+    } else {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td colspan='3' style='text-align:center'>No Player has played!!</td>";
+      tableBody.appendChild(tr);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+});
+
+//Creating SelectPlayer Table
+const tableBody1 = document.getElementById("data-body1");
+//Show High Scores in the Table
+resumeGameButton.addEventListener("click", async () => {
+  modalContent.style.display = "none";
+  modalContent1.style.display = "none";
+  modalContent3.style.display = "flex";
+
+  // Display loading state
+  tableBody1.innerHTML =
+    '<tr><td colspan="3" style="text-align:center">Loading...</td></tr>';
+
+  try {
+    const response = await fetch("http://localhost:5000/api/data");
+    const result = await response.json();
+    const data = result.data;
+
+    // Clear existing table data
+    tableBody1.innerHTML = "";
+
+    if (data.length > 0) {
+      const rowsHtml = data
+        .map(
+          (row, index) => `
+        <tr class="selectPlayer" id="${
+          row.id + "_" + row.name + "_" + row.score
+        }" >
+          <td class="bordered-cell">${index + 1}</td>
+          <td class="bordered-cell">${row.name}</td>
+        </tr>
+      `
+        )
+        .join("");
+
+      tableBody1.innerHTML = rowsHtml;
+    } else {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td colspan='3' style='text-align:center'>No Player has played!!</td>";
+      tableBody1.appendChild(tr);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+});
+
+// Attach event listener to the parent element for event delegation
+tableBody1.addEventListener("click", (event) => {
+  const selectedPlayer = event.target.closest(".selectPlayer");
+  const playerId = selectedPlayer.id;
+
+  const [id, name, score] = playerId.split("_");
+  sessionStorage.setItem("userData", JSON.stringify({ id, name, score }));
+  if (sessionStorage.getItem("userData")) {
+    modalContent3.style.display = "none";
+    canvas.style.display = "block";
+    keysAccess = true;
+    init();
+    animate();
+  }
+});
+
+// back to the main modal
+backButton.addEventListener("click", () => {
+  modalContent2.style.display = "none";
+  modalContent.style.display = "flex";
+  input.focus();
+});
+backButton1.addEventListener("click", () => {
+  modalContent3.style.display = "none";
+  modalContent.style.display = "flex";
+  input.focus();
+});
 
 /**
  * Handles platform collision detection with various objects.
@@ -1098,28 +1376,45 @@ function checkFlagCollision() {
 }
 
 document.addEventListener("keydown", ({ code }) => {
-  switch (code) {
-    case "ArrowUp":
-      if (!upKeyHeld && player.isPlayerOnGround) {
-        player.movement.y -= 26;
-        upKeyHeld = true;
-        player.isPlayerOnGround = false;
-      }
-      break;
-    case "ArrowLeft":
-      keys.left.pressed = true;
-      lastKey = "left";
+  if (keysAccess) {
+    switch (code) {
+      case "ArrowUp":
+        if (!upKeyHeld && player.isPlayerOnGround && !isPaused) {
+          player.movement.y -= 26;
+          upKeyHeld = true;
+          player.isPlayerOnGround = false;
+        }
+        break;
+      case "ArrowLeft":
+        if (!isPaused) {
+          keys.left.pressed = true;
+          lastKey = "left";
+        }
 
-      break;
-    case "ArrowRight":
-      keys.right.pressed = true;
-      lastKey = "right";
+        break;
+      case "ArrowRight":
+        if (!isPaused) {
+          keys.right.pressed = true;
+          lastKey = "right";
+        }
 
-      break;
-    case "Space":
-      keys.space.pressed = true;
+        break;
+      case "Space":
+        if (!isPaused) {
+          keys.space.pressed = true;
+        }
 
-      break;
+        break;
+      case "KeyP":
+        isPaused = !isPaused;
+        if (!isPaused) {
+          modalContent1.style.display = "none";
+          animate();
+        } else {
+          modalContent1.style.display = "flex";
+        }
+        break;
+    }
   }
 });
 
