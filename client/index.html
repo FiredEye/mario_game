@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mario-Game</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgb(201, 93, 223);
+        position: relative;
+      }
+
+      .container {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .modal {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content,
+      .modal-content1,
+      .modal-content2,
+      .modal-content3 {
+        width: 600px;
+        height: 400px;
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        flex: none;
+      }
+      .modal-content {
+        display: flex;
+      }
+      input {
+        width: 300px;
+        height: 30px;
+        outline: none;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .homeH1 {
+        margin-top: 40px;
+      }
+      .scoreH1 {
+        margin-top: 20px;
+      }
+      .desc {
+        color: red;
+      }
+      button {
+        width: fit-content;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+      }
+      .show,
+      .restart {
+        background-color: #dd65d7;
+      }
+      .show:hover,
+      .restart:hover {
+        background-color: #be32b7;
+      }
+      .start,
+      .resume {
+        background-color: #4cbb17;
+      }
+      .start:hover,
+      .resume:hover {
+        background-color: #4bbb17d7;
+      }
+      .back,
+      .back1,
+      .resumeGame,
+      .returnHome {
+        background-color: #28affd;
+      }
+      .back:hover,
+      .back1:hover,
+      .resumeGame:hover,
+      .returnHome:hover {
+        background-color: #007bff;
+      }
+      .bordered-cell {
+        border: 1px solid black;
+        text-align: center;
+      }
+      .table-wrapper {
+        height: 230px;
+        overflow: auto;
+      }
+
+      .sticky-thead {
+        position: sticky;
+        top: 0;
+        background-color: white;
+      }
+      .selectPlayer:hover {
+        background-color: rgb(184, 182, 182);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <canvas></canvas>
+      <div class="modal">
+        <div class="modal-content">
+          <h1 class="homeH1">Enter Your Name:</h1>
+          <input type="text" class="input" autofocus />
+          <button class="start" disabled>Start Game</button>
+
+          <button class="resumeGame">Resume Game</button>
+          <button class="show">Show High Score</button>
+        </div>
+        <div class="modal-content1">
+          <h1 class="scoreH1">Game Paused:</h1>
+          <i class="desc">** Press 'p' or [resume] button to continue **</i>
+          <button class="resume">Resume</button>
+          <button class="restart">Restart Game</button>
+          <button class="returnHome">Home</button>
+        </div>
+        <div class="modal-content2">
+          <h1 class="scoreH1">Score Board:</h1>
+          <div class="table-wrapper">
+            <table
+              cellspacing="0"
+              style="width: 570px; border: 1px solid black"
+            >
+              <thead class="sticky-thead">
+                <tr style="font-weight: 700">
+                  <td style="width: 20%" class="bordered-cell">S.N.</td>
+                  <td style="width: 50%" class="bordered-cell">Name</td>
+                  <td style="width: 30%" class="bordered-cell">Score</td>
+                </tr>
+              </thead>
+              <tbody id="data-body"></tbody>
+            </table>
+          </div>
+          <button class="back">Back</button>
+        </div>
+        <div class="modal-content3">
+          <h1 class="scoreH1">Select Player:</h1>
+          <div class="table-wrapper">
+            <table
+              cellspacing="0"
+              style="width: 570px; border: 1px solid black"
+            >
+              <thead class="sticky-thead">
+                <tr style="font-weight: 700">
+                  <td style="width: 20%" class="bordered-cell">S.N.</td>
+                  <td style="width: 80%" class="bordered-cell">Name</td>
+                </tr>
+              </thead>
+              <tbody id="data-body1"></tbody>
+            </table>
+          </div>
+          <button class="back1">Back</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
