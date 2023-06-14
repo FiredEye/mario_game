@@ -37,7 +37,7 @@ This will start the game and launch it in your default web browser. If it doesn'
 
 ## Controls
 
-Add user name and click `Sart Game` to start the game
+Add user name and click `Sart Game` to start the game.
 Use the up arrow key to make Mario jump.
 Use the left and right arrow keys to move Mario left and right, respectively.
 Press the spacebar to shoot a fireball.
