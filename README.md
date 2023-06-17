@@ -29,7 +29,7 @@ Note!! node and postgres must be installed in your system to run this program.
 
 Once you have installed the game,
 
-1. At first navigate to the project directory: `cd mario_game/server`, direct to the `tableSetUp.js and index.js` file inside server folder then add your database name,username and password.
+1. At first navigate to the project directory: `cd mario_game/server`, add a `.env` file inside server folder then add your database name, username and password.
 2. Then run command: `node tableSetUp.js`, also run command: `node index.js`
 3. At last in new terminal navigate to the project directory: `cd mario_game/client` and run command: `npm run mario`
 
@@ -39,7 +39,7 @@ This will start the game and launch it in your default web browser. If it doesn'
 
 Add user name and click `Sart Game` to start the game.
 Use the up arrow key to make Mario jump.
-Use the left and right arrow keys to move Mario left and right, respectively.
+Use the `left` and `right` arrow keys to move Mario left and right, respectively.
 Press the spacebar to shoot a fireball.
 Press the `P` key for pausing the game.
 
