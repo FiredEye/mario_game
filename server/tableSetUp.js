@@ -1,47 +1,39 @@
-const { Pool } = require("pg");
-
+const { knex } = require("knex");
+const dotenv = require("dotenv");
+dotenv.config();
 // Connection configuration
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "postgres", // Connect to the default 'postgres' database
-  user: "postgres",
-  password: "ratna@123",
+const db = knex({
+  client: "pg",
+  connection: {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+  },
 });
 
 async function createTableIfNotExists() {
-  // Connect to the default 'postgres' database
-  const client = await pool.connect();
   try {
-    // Check if the table already exists
-    const checkTableQuery = `
-          SELECT EXISTS (
-            SELECT 1
-            FROM information_schema.tables
-            WHERE table_schema = 'public' AND table_name = 'scoreTable'
-          )
-        `;
-    const checkTableResult = await client.query(checkTableQuery);
+    const tableExists = await db.schema.hasTable("scoreTable");
 
-    if (checkTableResult.rows[0].exists) {
+    if (tableExists) {
       console.log("Table already exists");
     } else {
-      // Create the table
-      const createTableQuery = `
-            CREATE TABLE scoreTable (
-              id SERIAL PRIMARY KEY,
-              name VARCHAR(255),
-              score INTEGER
-            )
-          `;
-      await client.query(createTableQuery);
+      await db.schema.createTable("scoreTable", (table) => {
+        table.increments("id").primary();
+        table.string("name", 255);
+        table.integer("score");
+        table.string("code", 255);
+        table.string("created_at");
+        table.string("updated_at");
+      });
       console.log("Table created successfully");
     }
   } catch (error) {
     console.error("Error creating table:", error);
   } finally {
-    client.release();
-    pool.end();
+    await db.destroy();
   }
 }
 

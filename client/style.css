@@ -1,0 +1,163 @@
+
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgb(201, 93, 223);
+        position: relative;
+      }
+
+      .container {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .modal {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-content,
+      .modal-content1,
+      .modal-content2,
+      .modal-content3,
+      .modal-content4 {
+        width: 600px;
+        height: 400px;
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        flex: none;
+      }
+
+      .modal-content3,.modal-content2 {
+        position: relative;
+        z-index: 1;
+      }
+#pagination-controls,#pagination-controls1{
+
+  position: absolute; 
+  bottom: 0; 
+  display: flex;
+justify-content: space-around;
+width: 570px;
+padding: 20px 0px;
+}
+
+      .modal-content4 {
+        position: absolute;
+        padding:20px;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: fit-content;
+        height: 225px;
+        background-color: wheat;
+        z-index: 2;
+      }
+
+      .modal-content {
+        display: flex;
+        gap: 15px;
+      }
+      input {
+        width: 300px;
+        height: 30px;
+        outline: none;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .homeH1,
+      .codeH1 {
+        margin-top: 15px;
+      }
+      .scoreH1 {
+        margin-top: 20px;
+      }
+      .desc {
+        color: red;
+      }
+      button {
+        width: fit-content;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+      }
+      #prev-button,#next-button,#prev-button1,#next-button1{
+        background-color: rgb(255, 179, 71);
+      }
+      #prev-button:hover,#next-button:hover,#prev-button1:hover,#next-button1:hover{
+        background-color: rgb(218, 147, 48);       
+      }
+      .cancel_code {
+        background-color: #dc3545;
+      }
+      .cancel_code:hover {
+        background-color: #c92435;
+      }
+      .show,
+      .restart {
+        background-color: #dd65d7;
+      }
+      .show:hover,
+      .restart:hover {
+        background-color: #be32b7;
+      }
+      .start,
+      .resume,.start_code {
+        background-color: #4bbb17d7;
+      }
+      .start:hover,
+      .resume:hover,.start_code:hover {
+        background-color: #4cbb17;
+      }
+      .back,
+      .back1,
+      .resumeGame,
+      .returnHome {
+        background-color: #28affd;
+      }
+      .back:hover,
+      .back1:hover,
+      .resumeGame:hover,
+      .returnHome:hover {
+        background-color: #007bff;
+      }
+
+      table{
+        width: 570px;
+        border: 1px solid black;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+      .bordered-cell {
+        border: 1px solid black;
+        text-align: center;
+      }
+     
+      .selectPlayer:hover {
+        background-color: rgb(184, 182, 182);
+        cursor: pointer;
+      }
+    
