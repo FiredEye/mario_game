@@ -1,65 +1,25 @@
-import Platform from "./classes/Platform.js";
-import BackgroundObject from "./classes/BackgroundObject.js";
-import Player from "./classes/Player.js";
-import FireBall from "./classes/FireBall.js";
-import PowerObject from "./classes/PowerObject.js";
-import ObstacleObject from "./classes/ObstacleObject.js";
-import WinFlag from "./classes/WinFlag.js";
+import Platform from "../classes/Platform.js";
+import BackgroundObject from "../classes/BackgroundObject.js";
+import Player from "../classes/player.js";
+import FireBall from "../classes/FireBall.js";
+import PowerObject from "../classes/PowerObject.js";
+import ObstacleObject from "../classes/ObstacleObject.js";
+import WinFlag from "../classes/WinFlag.js";
 import {
   checkCollision,
   checkObjectOnTop,
   isWithinBounds,
   CreateImage,
+  CreateNewDate,
 } from "./utils.js";
+import { sharedData, keys, playerSprite } from "./shared.js";
 
-const canvas = document.querySelector("canvas");
-canvas.width = 1024;
-canvas.height = 576;
+sharedData.canvas.width = 1024;
+sharedData.canvas.height = 576;
 
-const context = canvas.getContext("2d");
-
-// Get the modal-content div
-var modalContent = document.querySelector(".modal-content");
-var modalContent1 = document.querySelector(".modal-content1");
-var modalContent2 = document.querySelector(".modal-content2");
-var modalContent3 = document.querySelector(".modal-content3");
-
-// Selecting the input element
-var input = document.querySelector(".input");
-
-// Select the Show button
-var showButton = document.querySelector(".show");
-
-// Select the Start button
-var startButton = document.querySelector(".start");
-
-//Create the Resume button
-var resumeButton = document.querySelector(".resume");
-// Create the Resume Game button
-var resumeGameButton = document.querySelector(".resumeGame");
-
-//Create Return home button
-var returnHomeButton = document.querySelector(".returnHome");
-
-// Create the Restart button
-var restartButton = document.querySelector(".restart");
-
-// Create the Back button
-var backButton = document.querySelector(".back");
-var backButton1 = document.querySelector(".back1");
-
-// Add event listener to the input
-input.addEventListener("input", function () {
-  // Check the length of the input value
-  if (input.value.length > 4) {
-    startButton.removeAttribute("disabled"); // Enable the button
-  } else {
-    startButton.setAttribute("disabled", true); // Disable the button
-  }
-});
+const context = sharedData.canvas.getContext("2d");
 
 const gravity = 1.5;
-let keysAccess = false;
 let player;
 let bgImg;
 let obstacleImg;
@@ -73,138 +33,25 @@ let platforms = [];
 let backgroundObjects = [];
 let obstacleObjects = [];
 let powerObjects = [];
-let lastKey;
+
 let lengthCovered;
-let scoreBoard = 140;
+
 let upKeyHeld = false;
-let playerPowerUp = false;
 let fireBallPushed = false;
 let hi_score, playerName, playerScore;
-//24 for the canvas width deduction as it has 1024w and background image has 1000w,taking product of one less background images of the array and (rounding it to its floor; here round off is taken w.r.to lengthCovered=+-3 ie(3) if necessary)
+//24 for the sharedData.canvas width deduction as it has 1024w and background image has 1000w,taking product of one less background images of the array and (rounding it to its floor; here round off is taken w.r.to lengthCovered=+-3 ie(3) if necessary)
 let backgroundWidth;
-// const calculatedWidth = CreateImage(bg).width * 3 - 24;
-// backgroundWidth = calculatedWidth > 0 ? calculatedWidth : 2976;
-const playerSprite = {
-  stand: {
-    cropXr: 250,
-    cropXl: 130,
-    cropY: 40,
-    right: [
-      CreateImage("./player/right/Idle (1).png"),
-      CreateImage("./player/right/Idle (2).png"),
-      CreateImage("./player/right/Idle (3).png"),
-      CreateImage("./player/right/Idle (4).png"),
-      CreateImage("./player/right/Idle (5).png"),
-      CreateImage("./player/right/Idle (6).png"),
-      CreateImage("./player/right/Idle (7).png"),
-      CreateImage("./player/right/Idle (8).png"),
-      CreateImage("./player/right/Idle (9).png"),
-      CreateImage("./player/right/Idle (10).png"),
-    ],
-    left: [
-      CreateImage("./player/left/Idle (1).png"),
-      CreateImage("./player/left/Idle (2).png"),
-      CreateImage("./player/left/Idle (3).png"),
-      CreateImage("./player/left/Idle (4).png"),
-      CreateImage("./player/left/Idle (5).png"),
-      CreateImage("./player/left/Idle (6).png"),
-      CreateImage("./player/left/Idle (7).png"),
-      CreateImage("./player/left/Idle (8).png"),
-      CreateImage("./player/left/Idle (9).png"),
-      CreateImage("./player/left/Idle (10).png"),
-    ],
-    rightP: [
-      CreateImage("./player/right/IdleP (1).png"),
-      CreateImage("./player/right/IdleP (2).png"),
-      CreateImage("./player/right/IdleP (3).png"),
-      CreateImage("./player/right/IdleP (4).png"),
-      CreateImage("./player/right/IdleP (5).png"),
-      CreateImage("./player/right/IdleP (6).png"),
-      CreateImage("./player/right/IdleP (7).png"),
-      CreateImage("./player/right/IdleP (8).png"),
-      CreateImage("./player/right/IdleP (9).png"),
-      CreateImage("./player/right/IdleP (10).png"),
-    ],
-    leftP: [
-      CreateImage("./player/left/IdleP (1).png"),
-      CreateImage("./player/left/IdleP (2).png"),
-      CreateImage("./player/left/IdleP (3).png"),
-      CreateImage("./player/left/IdleP (4).png"),
-      CreateImage("./player/left/IdleP (5).png"),
-      CreateImage("./player/left/IdleP (6).png"),
-      CreateImage("./player/left/IdleP (7).png"),
-      CreateImage("./player/left/IdleP (8).png"),
-      CreateImage("./player/left/IdleP (9).png"),
-      CreateImage("./player/left/IdleP (10).png"),
-    ],
-  },
-  run: {
-    cropXr: 240,
-    cropXl: 140,
-    cropY: 30,
-    right: [
-      CreateImage("./player/right/Run (1).png"),
-      CreateImage("./player/right/Run (2).png"),
-      CreateImage("./player/right/Run (3).png"),
-      CreateImage("./player/right/Run (4).png"),
-      CreateImage("./player/right/Run (5).png"),
-      CreateImage("./player/right/Run (6).png"),
-      CreateImage("./player/right/Run (7).png"),
-      CreateImage("./player/right/Run (8).png"),
-    ],
-    left: [
-      CreateImage("./player/left/Run (1).png"),
-      CreateImage("./player/left/Run (2).png"),
-      CreateImage("./player/left/Run (3).png"),
-      CreateImage("./player/left/Run (4).png"),
-      CreateImage("./player/left/Run (5).png"),
-      CreateImage("./player/left/Run (6).png"),
-      CreateImage("./player/left/Run (7).png"),
-      CreateImage("./player/left/Run (8).png"),
-    ],
-    rightP: [
-      CreateImage("./player/right/RunP (1).png"),
-      CreateImage("./player/right/RunP (2).png"),
-      CreateImage("./player/right/RunP (3).png"),
-      CreateImage("./player/right/RunP (4).png"),
-      CreateImage("./player/right/RunP (5).png"),
-      CreateImage("./player/right/RunP (6).png"),
-      CreateImage("./player/right/RunP (7).png"),
-      CreateImage("./player/right/RunP (8).png"),
-    ],
-    leftP: [
-      CreateImage("./player/left/RunP (1).png"),
-      CreateImage("./player/left/RunP (2).png"),
-      CreateImage("./player/left/RunP (3).png"),
-      CreateImage("./player/left/RunP (4).png"),
-      CreateImage("./player/left/RunP (5).png"),
-      CreateImage("./player/left/RunP (6).png"),
-      CreateImage("./player/left/RunP (7).png"),
-      CreateImage("./player/left/RunP (8).png"),
-    ],
-  },
-};
-const keys = {
-  left: {
-    pressed: false,
-  },
-  right: {
-    pressed: false,
-  },
-  space: {
-    pressed: false,
-  },
-};
+
 /**
  * Checks if the current score is a high score and performs actions accordingly.
  * @param {number} playScore - The current score.
  * @param {HiScoreStatus} [destination="not_reached"] - The destination status after reaching high score.
  */
 function CheckHiScore(playScore, destination = "not_reached") {
-  scoreBoard = 140;
+  sharedData.scoreBoard = 140;
   keys.left.pressed = false;
   keys.right.pressed = false;
-  playerPowerUp = false;
+  sharedData.playerPowerUp = false;
 
   const userData = JSON.parse(sessionStorage.getItem("userData"));
   const { id, score } = userData;
@@ -220,7 +67,7 @@ function CheckHiScore(playScore, destination = "not_reached") {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ score: playScore }),
+        body: JSON.stringify({ score: playScore, updated_at: CreateNewDate() }),
       })
         .then((response) => response.json())
         .then((result) => {
@@ -235,20 +82,33 @@ function CheckHiScore(playScore, destination = "not_reached") {
   } else if (destination === "reached") {
     alert("You completed the game!!");
   }
-  init();
+  fetch(`http://localhost:5000/api/userData/lastPlayed/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ updated_at: CreateNewDate() }),
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      if (result.message) {
+        init();
+      }
+    })
+    .catch((error) => console.error(error));
 }
 /**
  * Initializes the game.
  */
-function init() {
-  //24 for the canvas width deduction as it has 1024w and background image has 1000w,taking product of one less background images of the array and (rounding it to its floor; here round off is taken w.r.to lengthCovered=+-3 ie(3) if necessary)
-  backgroundWidth = CreateImage("./BG/BG.png").width * 3 - 24;
-  bgImg = CreateImage("./BG/BG.png");
-  obstacleImg = CreateImage("./Object/obstacle.png");
-  powerUpImg = CreateImage("./Object/Mushroom_1.png");
-  bigPlatform = CreateImage("./Tiles/bigPlatform.png");
-  midPlatform = CreateImage("./Tiles/midPlatform.png");
-  smallPlatform = CreateImage("./Tiles/smallPlatform.png");
+export function init() {
+  //24 for the sharedData.canvas width deduction as it has 1024w and background image has 1000w,taking product of one less background images of the array and (rounding it to its floor; here round off is taken w.r.to lengthCovered=+-3 ie(3) if necessary)
+  backgroundWidth = CreateImage("/assets/images/BG/BG.png").width * 3 - 24;
+  bgImg = CreateImage("/assets/images/BG/BG.png");
+  obstacleImg = CreateImage("/assets/images/Object/obstacle.png");
+  powerUpImg = CreateImage("/assets/images/Object/Mushroom_1.png");
+  bigPlatform = CreateImage("/assets/images/Tiles/bigPlatform.png");
+  midPlatform = CreateImage("/assets/images/Tiles/midPlatform.png");
+  smallPlatform = CreateImage("/assets/images/Tiles/smallPlatform.png");
 
   const data = sessionStorage.getItem("userData");
   const { name, score } = JSON.parse(data);
@@ -261,13 +121,12 @@ function init() {
     })
     .catch((error) => console.error(error));
 
-  player = new Player(playerSprite, gravity, canvas, context);
+  player = new Player(playerSprite, gravity, sharedData.canvas, context);
   Flag = new WinFlag({
     position: { x: 5930, y: 340 },
-    image: CreateImage("./Object/flag.png"),
-
+    image: CreateImage("/assets/images/Object/flag.png"),
     gravity,
-    canvas,
+    canvas: sharedData.canvas,
     context,
   });
 
@@ -649,7 +508,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -657,7 +516,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -665,7 +524,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -673,7 +532,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -681,7 +540,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -689,7 +548,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -697,7 +556,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -705,7 +564,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -713,7 +572,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new ObstacleObject({
@@ -721,7 +580,7 @@ function init() {
       image: obstacleImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
   ];
@@ -731,7 +590,7 @@ function init() {
       image: powerUpImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new PowerObject({
@@ -739,7 +598,7 @@ function init() {
       image: powerUpImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
     new PowerObject({
@@ -747,30 +606,29 @@ function init() {
       image: powerUpImg,
 
       gravity,
-      canvas,
+      canvas: sharedData.canvas,
       context,
     }),
   ];
   lengthCovered = 0;
 }
 
-let isPaused = false;
 /**
- *Animates the game by updating and drawing various game objects on the canvas.
+ *Animates the game by updating and drawing various game objects on the sharedData.canvas.
  */
-function animate() {
-  if (!isPaused) {
+export function animate() {
+  if (!sharedData.isPaused) {
     requestAnimationFrame(animate);
     /**
      *Clears the canvas and sets the background color.
      */
     context.fillStyle = "white";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillRect(0, 0, sharedData.canvas.width, sharedData.canvas.height);
     /**
-     *Draws background objects that are within the canvas bounds.
+     *Draws background objects that are within the sharedData.canvas bounds.
      */
     backgroundObjects.forEach((backgroundObject) => {
-      if (isWithinBounds(backgroundObject, canvas)) {
+      if (isWithinBounds(backgroundObject, sharedData.canvas)) {
         backgroundObject.draw();
       }
     });
@@ -785,43 +643,57 @@ function animate() {
     context.fillText(`Personal-Score:${playerScore}`, 510, 30);
 
     if (hi_score && hi_score > 140) {
-      context.fillText(`Hi-Score:${hi_score}`, canvas.width - 290, 30);
+      context.fillText(
+        `Hi-Score:${hi_score}`,
+        sharedData.canvas.width - 290,
+        30
+      );
     }
 
-    context.fillText(`Score:${scoreBoard}`, canvas.width - 130, 30);
+    context.fillText(
+      `Score:${sharedData.scoreBoard}`,
+      sharedData.canvas.width - 130,
+      30
+    );
     /**
-     *Draws platforms that are within the canvas bounds.
+     *Draws platforms that are within the sharedData.canvas bounds.
      */
     platforms.forEach((platform) => {
-      if (isWithinBounds(platform, canvas)) {
+      if (isWithinBounds(platform, sharedData.canvas)) {
         platform.draw();
       }
     });
     /**
 
-*Updates and draws the flag object if it is within the canvas bounds.
+*Updates and draws the flag object if it is within the sharedData.canvas bounds.
 */
 
-    if (isWithinBounds(Flag, canvas)) {
+    if (isWithinBounds(Flag, sharedData.canvas)) {
       Flag.updateDraw();
     }
     /**
-     *Updates and draws power objects that are within the canvas bounds.
+     *Updates and draws power objects that are within the sharedData.canvas bounds.
      */
     powerObjects.forEach((powerObject) => {
-      if (isWithinBounds(powerObject, canvas)) {
+      if (isWithinBounds(powerObject, sharedData.canvas)) {
         powerObject.updateDraw();
       }
     });
     /**
 
-*Updates and draws obstacle objects that are within the canvas bounds.
+*Updates and draws obstacle objects that are within the sharedData.canvas bounds.
 */
     obstacleObjects.forEach((obstacleObject, index) => {
-      if (obstacleObject.position.y + obstacleObject.height > canvas.height) {
+      if (
+        obstacleObject.position.y + obstacleObject.height >
+        sharedData.canvas.height
+      ) {
         obstacleObject.visible = false;
       }
-      if (obstacleObject.visible && isWithinBounds(obstacleObject, canvas)) {
+      if (
+        obstacleObject.visible &&
+        isWithinBounds(obstacleObject, sharedData.canvas)
+      ) {
         switch (index) {
           case 0:
           case 1:
@@ -845,8 +717,9 @@ function animate() {
      */
     fireBalls.forEach((fireBall, index) => {
       if (
-        (lastKey === "left" && fireBall.position.x <= fireBall.range - 200) ||
-        (lastKey === "right" &&
+        (sharedData.lastKey === "left" &&
+          fireBall.position.x <= fireBall.range - 200) ||
+        (sharedData.lastKey === "right" &&
           fireBall.position.x + fireBall.width >= fireBall.range + 200)
       ) {
         fireBalls.splice(index, 1);
@@ -874,219 +747,11 @@ function animate() {
     handleFireballMovement();
 
     // Checks if the player is off the platform or not.
-    if (player.position.y + player.height > canvas.height) {
-      CheckHiScore(scoreBoard);
+    if (player.position.y + player.height > sharedData.canvas.height) {
+      CheckHiScore(sharedData.scoreBoard);
     }
   }
 }
-
-//Start the game when the start button is clicked
-startButton.addEventListener("click", async () => {
-  modalContent.style.display = "none";
-  const userData = { name: input.value, score: 140 };
-
-  try {
-    const user = await fetch("http://localhost:5000/api/userData", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
-    });
-    const result = await user.json();
-    if (result.data) {
-      sessionStorage.setItem("userData", JSON.stringify(result.data));
-      canvas.style.display = "block";
-      keysAccess = true;
-      init();
-
-      animate();
-    }
-    if (!user.ok) {
-      throw new Error("Failed to post data");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-});
-
-//resume the game when the resumeBtn is  pressed
-resumeButton.addEventListener("click", () => {
-  modalContent1.style.display = "none";
-  isPaused = false;
-  animate();
-});
-
-//return to the start page when presse
-returnHomeButton.addEventListener("click", () => {
-  sessionStorage.clear();
-  canvas.style.display = "none";
-  modalContent1.style.display = "none";
-  input.value = "";
-  startButton.setAttribute("disabled", true);
-  modalContent.style.display = "flex";
-  modalContent.style.flex = "none";
-  modalContent1.style.flex = "none";
-  modalContent2.style.flex = "none";
-  modalContent3.style.flex = "none";
-  isPaused = false;
-  scoreBoard = 140;
-  keys.left.pressed = false;
-  keys.right.pressed = false;
-  playerPowerUp = false;
-  lastKey = "right";
-  keysAccess = false;
-  input.focus();
-});
-//restart the game when the restartBtn is  pressed
-restartButton.addEventListener("click", () => {
-  modalContent1.style.display = "none";
-  isPaused = false;
-  scoreBoard = 140;
-  keys.left.pressed = false;
-  keys.right.pressed = false;
-  playerPowerUp = false;
-  lastKey = "right";
-  fetch("http://localhost:5000/api/highScore")
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.largestScore) hi_score = data.largestScore;
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
-  init();
-  animate();
-});
-
-//Show High Scores in the Table
-showButton.addEventListener("click", async () => {
-  modalContent.style.display = "none";
-  modalContent1.style.display = "none";
-  modalContent2.style.display = "flex";
-  const tableBody = document.getElementById("data-body");
-
-  // Display loading state
-  tableBody.innerHTML =
-    '<tr><td colspan="3"style="text-align:center" >Loading...</td></tr>';
-  try {
-    const response = await fetch("http://localhost:5000/api/data");
-    const result = await response.json();
-    const data = result.data;
-
-    // Clear existing table data
-    tableBody.innerHTML = "";
-
-    if (data.length > 0) {
-      // Iterate through the data and create table rows
-      data.forEach((row, index) => {
-        const tr = document.createElement("tr");
-
-        // Create table cells and populate with data
-        const idCell = document.createElement("td");
-        idCell.textContent = index + 1;
-        idCell.classList.add("bordered-cell");
-
-        const nameCell = document.createElement("td");
-        nameCell.textContent = row.name;
-        nameCell.classList.add("bordered-cell");
-
-        const scoreCell = document.createElement("td");
-        scoreCell.textContent = row.score;
-        scoreCell.classList.add("bordered-cell");
-
-        // Append cells to the table row
-        tr.appendChild(idCell);
-        tr.appendChild(nameCell);
-        tr.appendChild(scoreCell);
-
-        // Append the table row to the table body
-        tableBody.appendChild(tr);
-      });
-    } else {
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td colspan='3' style='text-align:center'>No Player has played!!</td>";
-      tableBody.appendChild(tr);
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-});
-
-//Creating SelectPlayer Table
-const tableBody1 = document.getElementById("data-body1");
-//Show High Scores in the Table
-resumeGameButton.addEventListener("click", async () => {
-  modalContent.style.display = "none";
-  modalContent1.style.display = "none";
-  modalContent3.style.display = "flex";
-
-  // Display loading state
-  tableBody1.innerHTML =
-    '<tr><td colspan="3" style="text-align:center">Loading...</td></tr>';
-
-  try {
-    const response = await fetch("http://localhost:5000/api/data");
-    const result = await response.json();
-    const data = result.data;
-
-    // Clear existing table data
-    tableBody1.innerHTML = "";
-
-    if (data.length > 0) {
-      const rowsHtml = data
-        .map(
-          (row, index) => `
-        <tr class="selectPlayer" id="${
-          row.id + "_" + row.name + "_" + row.score
-        }" >
-          <td class="bordered-cell">${index + 1}</td>
-          <td class="bordered-cell">${row.name}</td>
-        </tr>
-      `
-        )
-        .join("");
-
-      tableBody1.innerHTML = rowsHtml;
-    } else {
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td colspan='3' style='text-align:center'>No Player has played!!</td>";
-      tableBody1.appendChild(tr);
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-});
-
-// Attach event listener to the parent element for event delegation
-tableBody1.addEventListener("click", (event) => {
-  const selectedPlayer = event.target.closest(".selectPlayer");
-  const playerId = selectedPlayer.id;
-
-  const [id, name, score] = playerId.split("_");
-  sessionStorage.setItem("userData", JSON.stringify({ id, name, score }));
-  if (sessionStorage.getItem("userData")) {
-    modalContent3.style.display = "none";
-    canvas.style.display = "block";
-    keysAccess = true;
-    init();
-    animate();
-  }
-});
-
-// back to the main modal
-backButton.addEventListener("click", () => {
-  modalContent2.style.display = "none";
-  modalContent.style.display = "flex";
-  input.focus();
-});
-backButton1.addEventListener("click", () => {
-  modalContent3.style.display = "none";
-  modalContent.style.display = "flex";
-  input.focus();
-});
 
 /**
  * Handles platform collision detection with various objects.
@@ -1128,7 +793,7 @@ function handlePlayerMovement() {
     (keys.left.pressed && lengthCovered === 0 && player.position.x > 0)
   ) {
     // Decrease score and move player to the left
-    scoreBoard -= 5;
+    sharedData.scoreBoard -= 5;
     player.movement.x = -5;
   } else if (
     (keys.right.pressed &&
@@ -1136,11 +801,11 @@ function handlePlayerMovement() {
       lengthCovered < backgroundWidth) ||
     (keys.right.pressed &&
       lengthCovered === backgroundWidth &&
-      player.position.x + player.width < canvas.width)
+      player.position.x + player.width < sharedData.canvas.width)
   ) {
     // Increase score and move player to the right
     player.movement.x = +5;
-    scoreBoard += 5;
+    sharedData.scoreBoard += 5;
   } else {
     player.movement.x = 0;
     if (
@@ -1149,7 +814,7 @@ function handlePlayerMovement() {
       player.position.x + player.width >= 400
     ) {
       // Decrease score and move player to the left
-      scoreBoard -= 5;
+      sharedData.scoreBoard -= 5;
       player.movement.x = -5;
     }
     if (
@@ -1159,7 +824,7 @@ function handlePlayerMovement() {
       player.position.x + player.width < 400
     ) {
       // Decrease score, move player to the left, and adjust positions of other objects
-      scoreBoard -= 5;
+      sharedData.scoreBoard -= 5;
       lengthCovered -= 3;
       backgroundObjects.forEach((backgroundObject) => {
         backgroundObject.position.x += 3;
@@ -1179,7 +844,7 @@ function handlePlayerMovement() {
       });
     } else if (keys.right.pressed && lengthCovered < backgroundWidth) {
       // Increase score, move player to the right, and adjust positions of other objects
-      scoreBoard += 5;
+      sharedData.scoreBoard += 5;
       lengthCovered += 3;
       backgroundObjects.forEach((backgroundObject) => {
         backgroundObject.position.x -= 3;
@@ -1208,20 +873,20 @@ function handlePlayerMovement() {
 function handlePlayerSpriteChange() {
   if (
     keys.right.pressed &&
-    lastKey === "right" &&
+    sharedData.lastKey === "right" &&
     player.currentSprite !== player.sprite.run.right
   ) {
-    player.currentSprite = playerPowerUp
+    player.currentSprite = sharedData.playerPowerUp
       ? player.sprite.run.rightP
       : player.sprite.run.right;
     player.currentCropX = player.sprite.run.cropXr;
     player.currentCropY = player.sprite.run.cropY;
   } else if (
     keys.left.pressed &&
-    lastKey === "left" &&
+    sharedData.lastKey === "left" &&
     player.currentSprite !== player.sprite.run.left
   ) {
-    player.currentSprite = playerPowerUp
+    player.currentSprite = sharedData.playerPowerUp
       ? player.sprite.run.leftP
       : player.sprite.run.left;
 
@@ -1229,20 +894,20 @@ function handlePlayerSpriteChange() {
     player.currentCropY = player.sprite.run.cropY;
   } else if (
     !keys.left.pressed &&
-    lastKey === "left" &&
+    sharedData.lastKey === "left" &&
     player.currentSprite !== player.sprite.stand.left
   ) {
-    player.currentSprite = playerPowerUp
+    player.currentSprite = sharedData.playerPowerUp
       ? player.sprite.stand.leftP
       : player.sprite.stand.left;
     player.currentCropX = player.sprite.stand.cropXl;
     player.currentCropY = player.sprite.stand.cropY;
   } else if (
     !keys.right.pressed &&
-    lastKey === "right" &&
+    sharedData.lastKey === "right" &&
     player.currentSprite !== player.sprite.stand.right
   ) {
-    player.currentSprite = playerPowerUp
+    player.currentSprite = sharedData.playerPowerUp
       ? player.sprite.stand.rightP
       : player.sprite.stand.right;
     player.currentCropX = player.sprite.stand.cropXr;
@@ -1260,8 +925,8 @@ function handlePlayerSpriteChange() {
 *This function also ensures that only one fireball is pushed at a time by using the fireBallPushed flag.
 */
 function handleFireballMovement() {
-  if (playerPowerUp && !fireBallPushed && keys.space.pressed) {
-    if (lastKey === "right") {
+  if (sharedData.playerPowerUp && !fireBallPushed && keys.space.pressed) {
+    if (sharedData.lastKey === "right") {
       fireBalls.push(
         new FireBall({
           position: {
@@ -1272,7 +937,7 @@ function handleFireballMovement() {
           context,
         })
       );
-    } else if (lastKey === "left") {
+    } else if (sharedData.lastKey === "left") {
       fireBalls.push(
         new FireBall({
           position: {
@@ -1295,7 +960,7 @@ function handleFireballMovement() {
 
 *If a collision is detected and the power object is visible, it is consumed by the player.
 
-*The power object's visibility is set to false, playerPowerUp flag is set to true, and the scoreBoard is increased by 1000.
+*The power object's visibility is set to false, sharedData.playerPowerUp flag is set to true, and the sharedData.scoreBoard is increased by 1000.
 
 *Player is then able to throw Fireball by pressing space bar.
 */
@@ -1304,8 +969,8 @@ function handlePowerObjectCollision() {
     if (checkCollision(player, powerObject)) {
       if (powerObject.visible) {
         powerObject.visible = false;
-        playerPowerUp = true;
-        scoreBoard += 1000;
+        sharedData.playerPowerUp = true;
+        sharedData.scoreBoard += 1000;
       }
     }
   });
@@ -1319,17 +984,17 @@ function handlePowerObjectCollision() {
 
 *If the obstacle object is visible, it checks for collision with fire balls.
 
-*If a collision is detected, the corresponding fire ball is removed, scoreBoard is increased by 500, and the obstacle object is made invisible.
+*If a collision is detected, the corresponding fire ball is removed, sharedData.scoreBoard is increased by 500, and the obstacle object is made invisible.
 
-*It also checks if the player is on top of the obstacle object, in which case it sets the isPlayerOnObstacle flag to true and increases the scoreBoard by 500.
+*It also checks if the player is on top of the obstacle object, in which case it sets the isPlayerOnObstacle flag to true and increases the sharedData.scoreBoard by 500.
 
 *If there is a collision between the player and the obstacle object, it handles different cases:
 
 *If the player is on top of the obstacle, the obstacle object is made invisible.
 
-*If the player is colliding with the obstacle and the player has a power-up, the obstacle object is made invisible, the player loses the power-up, and the scoreBoard is decreased by 800.
+*If the player is colliding with the obstacle and the player has a power-up, the obstacle object is made invisible, the player loses the power-up, and the sharedData.scoreBoard is decreased by 800.
 
-*If the obstacle object is visible, it calls the CheckHiScore function with the current scoreBoard value.
+*If the obstacle object is visible, it calls the CheckHiScore function with the current sharedData.scoreBoard value.
 */
 function handleObstacleCollision() {
   obstacleObjects.forEach((obstacleObject) => {
@@ -1337,7 +1002,7 @@ function handleObstacleCollision() {
       fireBalls.forEach((fireBall, index) => {
         if (checkCollision(fireBall, obstacleObject)) {
           fireBalls.splice(index, 1);
-          scoreBoard += 500;
+          sharedData.scoreBoard += 500;
           obstacleObject.visible = false;
           return;
         }
@@ -1347,7 +1012,7 @@ function handleObstacleCollision() {
     if (checkObjectOnTop(player, obstacleObject)) {
       obstacleObject.isPlayerOnObstacle = true;
 
-      scoreBoard += 500;
+      sharedData.scoreBoard += 500;
     }
 
     if (checkCollision(player, obstacleObject)) {
@@ -1355,12 +1020,12 @@ function handleObstacleCollision() {
         obstacleObject.visible = false;
         return;
       }
-      if (obstacleObject.visible && playerPowerUp) {
+      if (obstacleObject.visible && sharedData.playerPowerUp) {
         obstacleObject.visible = false;
-        playerPowerUp = false;
-        scoreBoard -= 800;
+        sharedData.playerPowerUp = false;
+        sharedData.scoreBoard -= 800;
       }
-      obstacleObject.visible && CheckHiScore(scoreBoard);
+      obstacleObject.visible && CheckHiScore(sharedData.scoreBoard);
     }
   });
 }
@@ -1371,48 +1036,39 @@ function handleObstacleCollision() {
  */
 function checkFlagCollision() {
   if (checkCollision(player, Flag)) {
-    CheckHiScore(scoreBoard, "reached");
+    CheckHiScore(sharedData.scoreBoard, "reached");
   }
 }
 
 document.addEventListener("keydown", ({ code }) => {
-  if (keysAccess) {
+  if (sharedData.keysAccess) {
     switch (code) {
       case "ArrowUp":
-        if (!upKeyHeld && player.isPlayerOnGround && !isPaused) {
+        if (!upKeyHeld && player.isPlayerOnGround && !sharedData.isPaused) {
           player.movement.y -= 26;
           upKeyHeld = true;
           player.isPlayerOnGround = false;
         }
         break;
       case "ArrowLeft":
-        if (!isPaused) {
+        if (!sharedData.isPaused) {
           keys.left.pressed = true;
-          lastKey = "left";
+          sharedData.lastKey = "left";
         }
 
         break;
       case "ArrowRight":
-        if (!isPaused) {
+        if (!sharedData.isPaused) {
           keys.right.pressed = true;
-          lastKey = "right";
+          sharedData.lastKey = "right";
         }
 
         break;
       case "Space":
-        if (!isPaused) {
+        if (!sharedData.isPaused) {
           keys.space.pressed = true;
         }
 
-        break;
-      case "KeyP":
-        isPaused = !isPaused;
-        if (!isPaused) {
-          modalContent1.style.display = "none";
-          animate();
-        } else {
-          modalContent1.style.display = "flex";
-        }
         break;
     }
   }

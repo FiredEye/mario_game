@@ -1,70 +1,74 @@
-const { Pool } = require("pg");
+const { knex } = require("knex");
 const dotenv = require("dotenv");
 dotenv.config();
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+
+const db = knex({
+  client: "pg",
+  connection: {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+  },
 });
 
-async function insertScore(name, score) {
-  const client = await pool.connect();
-  const insertQuery = `
-    INSERT INTO scoreTable (name, score)
-    VALUES ($1, $2)
-    RETURNING *
-  `;
-  const insertValues = [name, score];
-
-  const result = await client.query(insertQuery, insertValues);
-
-  client.release();
-
-  return result.rows[0];
+async function insertScore(name, score, code, created_at, updated_at) {
+  const result = await db("scoreTable")
+    .insert({
+      name,
+      score,
+      code,
+      created_at,
+      updated_at,
+    })
+    .returning("*");
+  return result[0];
 }
 
-async function updateScore(id, score) {
-  const client = await pool.connect();
-  const updateQuery =
-    "UPDATE scoreTable SET score = $1 WHERE id = $2 RETURNING *";
-  const updateValues = [score, id];
-
-  const result = await client.query(updateQuery, updateValues);
-
-  client.release();
-
-  return result.rows[0];
+async function updateScore(id, score, updated_at) {
+  const result = await db("scoreTable")
+    .where("id", id)
+    .update({ score, updated_at })
+    .returning("*");
+  return result[0];
 }
 
-async function getAllScores() {
-  const client = await pool.connect();
-  const selectQuery = "SELECT * from scoreTable";
-
-  const result = await client.query(selectQuery);
-  const data = result.rows;
-
-  client.release();
-
-  return data;
+async function updateLastPlayed(id, updated_at) {
+  await db("scoreTable").where("id", id).update({ updated_at });
 }
 
 async function getHighestScore() {
-  const client = await pool.connect();
-  const selectQuery = "SELECT MAX(score) AS largest_score FROM scoreTable;";
-
-  const result = await client.query(selectQuery);
-  const largestScore = result.rows[0].largest_score;
-
-  client.release();
-
+  const result = await db("scoreTable").max("score as largest_score");
+  const largestScore = result[0].largest_score;
   return largestScore;
 }
 
+class Record {
+  static async getPaginatedRecords(page, limit) {
+    const offset = (page - 1) * limit;
+
+    const paginatedRecords = await db("scoreTable")
+      .orderBy("id")
+      .offset(offset)
+      .limit(limit);
+
+    return paginatedRecords;
+  }
+
+  static async getTotalCount() {
+    const totalCountQuery = db("scoreTable").count("* as count");
+    const totalCountResult = await totalCountQuery;
+    const totalCount = parseInt(totalCountResult[0].count);
+
+    return totalCount;
+  }
+}
+
 module.exports = {
+  Record,
   insertScore,
   updateScore,
-  getAllScores,
+  updateLastPlayed,
   getHighestScore,
 };

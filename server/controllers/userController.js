@@ -2,9 +2,15 @@ const userModel = require("../models/userModel");
 
 async function createScore(req, res) {
   try {
-    const { name, score } = req.body;
+    const { name, score, code, created_at, updated_at } = req.body;
 
-    const newScore = await userModel.insertScore(name, score);
+    const newScore = await userModel.insertScore(
+      name,
+      score,
+      code,
+      created_at,
+      updated_at
+    );
 
     res
       .status(201)
@@ -17,10 +23,10 @@ async function createScore(req, res) {
 
 async function updateScore(req, res) {
   try {
-    const { score } = req.body;
+    const { score, updated_at } = req.body;
     const id = req.params.id;
 
-    const updatedScore = await userModel.updateScore(id, score);
+    const updatedScore = await userModel.updateScore(id, score, updated_at);
 
     res
       .status(200)
@@ -31,16 +37,17 @@ async function updateScore(req, res) {
   }
 }
 
-async function getAllScores(req, res) {
+async function updateLastPlayed(req, res) {
   try {
-    const scores = await userModel.getAllScores();
+    const { updated_at } = req.body;
+    const id = req.params.id;
 
-    res
-      .status(200)
-      .json({ data: scores, message: "Data extracted successfully" });
+    await userModel.updateLastPlayed(id, updated_at);
+
+    res.status(200).json({ message: "Last played updated successfully" });
   } catch (error) {
-    console.error("Error extracting data:", error);
-    res.status(404).json({ message: "Failed to extract data" });
+    console.error("Error updating data:", error);
+    res.status(404).json({ message: "Failed to update data" });
   }
 }
 
@@ -57,9 +64,33 @@ async function getHighestScore(req, res) {
   }
 }
 
+async function paginatedScores(req, res) {
+  try {
+    const page = parseInt(req.query.page) || 1; // Current page number, defaulting to 1
+    const limit = parseInt(req.query.limit) || 10; // Number of records per page, defaulting to 10
+
+    const paginatedRecords = await userModel.Record.getPaginatedRecords(
+      page,
+      limit
+    );
+    const totalCount = await userModel.Record.getTotalCount();
+
+    res.status(200).json({
+      data: paginatedRecords,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
+      message: "Data extracted successfully",
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(404).json({ message: "Failed to extract data" });
+  }
+}
+
 module.exports = {
+  paginatedScores,
   createScore,
   updateScore,
-  getAllScores,
+  updateLastPlayed,
   getHighestScore,
 };

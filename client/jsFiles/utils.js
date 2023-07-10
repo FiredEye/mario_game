@@ -51,3 +51,20 @@ export function CreateImage(imgSrc) {
   image.src = imgSrc;
   return image;
 }
+
+/**
+ * Creates a new Date time.
+ * @returns {Date} - The created date time.
+ */
+export function CreateNewDate() {
+  const currentDate = new Date();
+  const formattedDate = currentDate.toLocaleString({
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
+  return formattedDate;
+}
